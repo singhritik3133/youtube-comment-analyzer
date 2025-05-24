@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Comment Sentiment Analyzer</title>
+  <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%);
+      --secondary-gradient: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+      --glass-bg: rgba(255, 255, 255, 0.10);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+      --blur: blur(14px);
+      --card-radius: 26px;
+      --input-radius: 32px;
+      --btn-radius: 32px;
+      --transition: 0.35s cubic-bezier(.4,2,.3,1);
+      --header-glow: 0 0 32px 8px #ff6a00, 0 0 64px 16px #ee0979;
+    }
+
+    body {
+      background: linear-gradient(120deg, #232526 0%, #414345 100%);
+      color: #eaeaea;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      letter-spacing: 0.01em;
+      position: relative;
+      overflow-x: hidden;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Dynamic Background */
+    .animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+      overflow: hidden;
+    }
+
+    .animated-bg::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, 
+        rgba(255, 106, 0, 0.15) 0%,
+        rgba(238, 9, 121, 0.15) 25%,
+        rgba(67, 206, 162, 0.15) 50%,
+        rgba(24, 90, 157, 0.15) 75%,
+        transparent 100%);
+      animation: rotate 20s linear infinite;
+    }
+
+    .animated-bg::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.1;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Enhanced Card Backgrounds */
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, 
+        rgba(255, 106, 0, 0.1),
+        rgba(238, 9, 121, 0.1),
+        rgba(67, 206, 162, 0.1));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .gradient-custom {
+      background: var(--primary-gradient);
+      box-shadow: var(--shadow);
+      border-radius: var(--card-radius);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .gradient-custom::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(120deg, #ff6a00 0%, #ee0979 100%, #43cea2 100%);
+      opacity: 0.18;
+      filter: blur(60px);
+      z-index: 0;
+      animation: headerGlow 8s linear infinite alternate;
+    }
+    @keyframes headerGlow {
+      0% { filter: blur(60px) brightness(1.1); }
+      100% { filter: blur(80px) brightness(1.3); }
+    }
+    .gradient-custom h1, .gradient-custom p {
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-title {
+      font-weight: 900;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      position: relative;
+      font-size: 2.1rem;
+      background: var(--secondary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 4px;
+      width: 80px;
+      background: var(--primary-gradient);
+      border-radius: 4px;
+      box-shadow: 0 2px 12px #ee0979a0;
+    }
+
+    .trend-chart-container, .pie-chart-container {
+      height: 350px;
+      margin-bottom: 2rem;
+      padding: 1.2rem;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: var(--shadow);
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      animation: cardFloat 6s ease-in-out infinite;
+    }
+    .trend-chart-container::before, .pie-chart-container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(120deg, rgba(255,106,0,0.04), rgba(67,206,162,0.04));
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .wordcloud-img {
+      max-width: 100%;
+      border-radius: 22px;
+      box-shadow: 0 10px 36px rgba(0,0,0,0.28);
+      transition: transform var(--transition), box-shadow var(--transition);
+      position: relative;
+      z-index: 1;
+    }
+    .wordcloud-img:hover {
+      transform: scale(1.04);
+      box-shadow: 0 16px 48px rgba(255,106,0,0.18);
+    }
+
+    .thumbnail-img {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 22px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.38);
+      margin-bottom: 22px;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .thumbnail-img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 24px 64px rgba(67,206,162,0.18);
+    }
+
+    .comment-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: 7px solid;
+      transition: box-shadow var(--transition), background var(--transition), transform var(--transition);
+      margin-bottom: 1.2rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .comment-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+    .comment-card::before {
+      content: '\f4ad';
+      font-family: 'bootstrap-icons';
+      position: absolute;
+      top: 18px; right: 22px;
+      font-size: 1.5rem;
+      color: #ff6a00a0;
+      opacity: 0.13;
+      z-index: 1;
+    }
+    .positive-card {
+      border-left-color: #43cea2;
+      background: linear-gradient(90deg, rgba(67,206,162,0.10), transparent);
+    }
+    .positive-card::before {
+      content: '\f44d'; /* thumbs-up icon */
+      color: #43cea2a0;
+    }
+    .negative-card {
+      border-left-color: #ee0979;
+      background: linear-gradient(90deg, rgba(238,9,121,0.10), transparent);
+    }
+    .negative-card::before {
+      content: '\f44e'; /* thumbs-down icon */
+      color: #ee0979a0;
+    }
+
+    .month-selector {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 22px 0 12px 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-gradient) transparent;
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    .month-selector::-webkit-scrollbar {
+      height: 8px;
+    }
+    .month-selector::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .month-selector::-webkit-scrollbar-thumb {
+      background: var(--primary-gradient);
+      border-radius: 5px;
+    }
+    .month-btn {
+      margin-right: 12px;
+      margin-bottom: 10px;
+      font-size: 1.08rem;
+      padding: 12px 28px;
+      border-radius: var(--btn-radius);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      color: #ffffff !important;
+      font-weight: 700;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.13);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .month-btn.active, .month-btn:focus, .month-btn:hover {
+      background: var(--primary-gradient);
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 8px 24px rgba(255,106,0,0.18);
+      transform: translateY(-2px) scale(1.06);
+    }
+    .month-btn:active::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 120%; height: 120%;
+      background: rgba(255,255,255,0.13);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      animation: ripple 0.5s linear;
+      z-index: 2;
+    }
+    @keyframes ripple {
+      0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.8); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
+    }
+
+    .loading-overlay {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 250px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.8; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.8; transform: scale(0.98); }
+    }
+
+    .btn-primary, .btn-outline-primary {
+      background: var(--primary-gradient);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 14px 36px;
+      border-radius: var(--btn-radius);
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 0.03em;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(255,106,0,0.13);
+      position: relative;
+      overflow: hidden;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      color: #ffffff !important;
+    }
+    .btn-primary:hover, .btn-outline-primary:hover {
+      background: var(--secondary-gradient);
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 12px 36px rgba(67,206,162,0.18);
+      transform: translateY(-2px) scale(1.07);
+    }
+    .btn-outline-primary {
+      background: transparent;
+      color: #ffffff !important;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    .btn-outline-primary:hover {
+      color: #ffffff !important;
+      border-color: rgba(67, 206, 162, 0.8);
+      background: rgba(67, 206, 162, 0.1);
+    }
+    .btn-primary:active::after, .btn-outline-primary:active::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 120%; height: 120%;
+      background: rgba(255,255,255,0.13);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      animation: ripple 0.5s linear;
+      z-index: 2;
+    }
+
+    .form-control {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 16px 28px;
+      border-radius: var(--input-radius);
+      font-size: 1.13rem;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+    }
+    .form-control:focus {
+      background: rgba(255,255,255,0.16);
+      border-color: #43cea2;
+      box-shadow: 0 0 0 0.2rem rgba(67,206,162,0.18);
+    }
+    .input-group-text {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--input-radius) 0 0 var(--input-radius);
+      padding: 16px 28px;
+      color: #ffffff;
+      font-size: 1.25rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .trend-chart-container, .pie-chart-container {
+        height: 220px;
+      }
+      .section-title {
+        font-size: 1.2rem;
+      }
+      .btn-primary, .btn-outline-primary {
+        font-size: 1rem;
+        padding: 10px 16px;
+      }
+      .thumbnail-img, .wordcloud-img {
+        border-radius: 14px;
+      }
+      .card, .trend-chart-container, .pie-chart-container {
+        border-radius: 14px;
+      }
+      #result .card,
+      .comment-card {
+        animation: none;
+      }
+      #result .card:hover,
+      .comment-card:hover {
+        transform: translateY(-3px) scale(1.01);
+      }
+    }
+
+    .welcome-card {
+      height: 100%;
+      margin-bottom: 0 !important;
+      background: rgba(255,255,255,0.13);
+      border-radius: 22px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13);
+      padding: 2rem 1.5rem;
+    }
+
+    @media (max-width: 991px) {
+      .welcome-card {
+        margin-bottom: 1.5rem !important;
+      }
+    }
+
+    @media (min-width: 992px) {
+      .welcome-card {
+        min-height: 520px;
+      }
+    }
+
+    .welcome-card .gradient-text {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .welcome-card .btn-outline-primary {
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 0.98rem;
+      padding: 6px 18px;
+      margin-bottom: 4px;
+    }
+    .welcome-card .btn-outline-primary:hover {
+      background: var(--secondary-gradient);
+      color: #fff;
+    }
+    .welcome-card .card {
+      background: rgba(0,0,0,0.18);
+      border-radius: 18px;
+      box-shadow: none;
+    }
+    .btn-outline-primary, .btn-primary, .btn-group .btn {
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .btn-outline-primary:hover, .btn-primary:hover, .btn-group .btn:hover {
+      filter: brightness(1.1) drop-shadow(0 2px 8px #ff6a0033);
+      transform: translateY(-2px) scale(1.04);
+    }
+    .btn-outline-primary.active, .btn-primary.active, .btn-group .btn.active {
+      background: var(--primary-gradient) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 16px #ee0979a0;
+      border-color: transparent !important;
+    }
+    .form-select, .form-control {
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .form-select:focus, .form-control:focus {
+      box-shadow: 0 0 0 0.2rem #43cea288;
+      border-color: #43cea2;
+    }
+    .list-group-item a {
+      transition: color 0.2s, text-decoration 0.2s;
+    }
+    .list-group-item a:hover {
+      color: #ee0979;
+      text-decoration: underline;
+    }
+
+    /* Logo Styles */
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(255, 106, 0, 0.1) 0%, transparent 70%);
+      animation: logoGlow 3s ease-in-out infinite;
+    }
+
+    .logo:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 12px 40px rgba(255, 106, 0, 0.3);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(5deg); }
+    }
+
+    @keyframes logoGlow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.2); }
+    }
+
+    /* Mobile Optimizations for Logo */
+    @media (max-width: 768px) {
+      .logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+      }
+    }
+
+    .logo-text {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      letter-spacing: 1px;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* Mobile Optimizations for Logo */
+    @media (max-width: 768px) {
+      .logo {
+        padding: 8px 16px;
+      }
+      
+      .logo-img {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .logo-text {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+  <script>
+    // Toast Notifications
+    function showToast(msg, type='success') {
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
+      toast.role = 'alert';
+      toast.innerHTML = `<div class='d-flex'><div class='toast-body'>${msg}</div><button type='button' class='btn-close btn-close-white ms-2 m-auto' data-bs-dismiss='toast'></button></div>`;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(()=>toast.remove(), 4000);
+    }
+    // Progress Bar
+    function showProgressBar() {
+      document.getElementById('progressBar').style.width = '0';
+      document.getElementById('progressBar').style.display = 'block';
+      setTimeout(()=>{document.getElementById('progressBar').style.width = '100%';}, 100);
+    }
+    function hideProgressBar() {
+      document.getElementById('progressBar').style.width = '0';
+      setTimeout(()=>{document.getElementById('progressBar').style.display = 'none';}, 500);
+    }
+    // Confetti
+    function showConfetti() {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+    }
+    // Export as PDF
+    function exportPDF() {
+      const doc = new window.jspdf.jsPDF();
+      doc.text('YouTube Sentiment Analysis Report', 10, 10);
+      doc.text(document.getElementById('result').innerText.slice(0, 800), 10, 20);
+      doc.save('sentiment_report.pdf');
+      showToast('PDF exported!', 'success');
+    }
+    // Download as Excel (CSV)
+    function downloadExcel() {
+      const csvBtn = document.querySelector("a[href^='/download/'][download]");
+      if (csvBtn) csvBtn.click();
+      else showToast('CSV not available', 'danger');
+    }
+    // Most Used Words Bar Chart (dummy, for demo)
+    function showMostUsedWords(words) {
+      const ctx = document.getElementById('wordsBarChart').getContext('2d');
+      if (window.wordsChart) window.wordsChart.destroy();
+      window.wordsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: words.map(w=>w.word),
+          datasets: [{
+            label: 'Count',
+            data: words.map(w=>w.count),
+            backgroundColor: '#43cea2',
+          }]
+        },
+        options: {responsive:true,plugins:{legend:{display:false}}}
+      });
+    }
+    // Recent Videos Logic
+    function addRecentVideo(url) {
+      let recent = JSON.parse(localStorage.getItem('ytRecentVideos') || '[]');
+      recent = recent.filter(v => v !== url);
+      recent.unshift(url);
+      if (recent.length > 5) recent = recent.slice(0,5);
+      localStorage.setItem('ytRecentVideos', JSON.stringify(recent));
+      renderRecentVideos();
+    }
+    function renderRecentVideos() {
+      const recent = JSON.parse(localStorage.getItem('ytRecentVideos') || '[]');
+      const list = document.getElementById('recentVideosList');
+      if (recent.length === 0) {
+        document.getElementById('recentVideosCard').style.display = 'none';
+        return;
+      }
+      document.getElementById('recentVideosCard').style.display = 'block';
+      list.innerHTML = recent.map(url => `<li class='list-group-item bg-transparent'><a href='#' class='text-primary recent-link' data-url='${url}'>${url}</a></li>`).join('');
+      document.querySelectorAll('.recent-link').forEach(link => {
+        link.onclick = function() {
+          document.getElementById('url').value = this.dataset.url;
+          if (window.analyzeSentiment) window.analyzeSentiment();
+        };
+      });
+    }
+    // Hook into analyzeSentiment for progress/confetti/quote
+    const origAnalyze = window.analyzeSentiment;
+    window.analyzeSentiment = async function() {
+      showProgressBar();
+      const url = document.getElementById('url').value;
+      if (url) {
+        addRecentVideo(url);
+      }
+      if (origAnalyze) await origAnalyze();
+      hideProgressBar();
+      showConfetti();
+    };
+    // Add export/download/chart/quote buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      showRandomQuote();
+      // Add Export/Download/Theme Customizer/Most Used Words UI
+      const resultDiv = document.getElementById('result');
+      const extraBar = document.createElement('div');
+      extraBar.className = 'd-flex flex-wrap gap-2 mb-4';
+      extraBar.innerHTML = `
+        <button class='btn btn-outline-primary' id='exportPDFBtn'><i class='bi bi-file-earmark-pdf me-1'></i>Export PDF</button>
+        <button class='btn btn-outline-primary' id='downloadExcelBtn'><i class='bi bi-file-earmark-excel me-1'></i>Download Excel/CSV</button>
+        <input type='color' id='accentColorPicker' value='#ff6a00' title='Pick Accent Color' style='width:40px;height:40px;border:none;border-radius:50%;box-shadow:0 2px 8px #0002;cursor:pointer;'>
+        <button class='btn btn-outline-primary' id='showWordsBtn'><i class='bi bi-bar-chart me-1'></i>Most Used Words</button>
+      `;
+      resultDiv.parentNode.insertBefore(extraBar, resultDiv);
+      document.getElementById('exportPDFBtn').onclick = exportPDF;
+      document.getElementById('downloadExcelBtn').onclick = downloadExcel;
+      document.getElementById('accentColorPicker').oninput = e => setAccentColor(e.target.value);
+      document.getElementById('showWordsBtn').onclick = function() {
+        // Dummy data for demo
+        showMostUsedWords([
+          {word:'great',count:12},{word:'love',count:10},{word:'amazing',count:8},{word:'bad',count:7},{word:'fun',count:6},{word:'boring',count:5},{word:'wow',count:4},{word:'super',count:3},{word:'hate',count:2},{word:'cool',count:1}
+        ]);
+        document.getElementById('wordsBarChartContainer').style.display = 'block';
+      };
+      // Toast for save/reset
+      document.getElementById('savePrefsBtn').onclick = ()=>showToast('Preferences saved!','success');
+      document.getElementById('resetPrefsBtn').onclick = ()=>showToast('Preferences reset!','info');
+      // Toast for feedback
+      document.getElementById('submitFeedback').onclick = ()=>showToast('Feedback sent!','success');
+    });
+  </script>
+</head>
+<body>
+  <!-- Dynamic Animated Backgrounds -->
+  <div class="animated-bg"></div>
+  <div id="particles-js" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;display:none;"></div>
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <!-- Header/Logo Row (Always at top) -->
+        <div class="row mb-4 align-items-center">
+          <div class="col-12">
+            <div class="d-flex align-items-center justify-content-center flex-wrap gap-3">
+              <div class="logo">
+                <img src="data:image/svg+xml;utf8,<svg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'><circle cx='24' cy='24' r='22' stroke='url(%23grad1)' stroke-width='4' fill='black'/><g><rect x='14' y='14' width='20' height='20' rx='6' fill='url(%23grad2)'/><path d='M18 28c2-4 10-4 12 0' stroke='white' stroke-width='2' stroke-linecap='round'/><circle cx='20' cy='22' r='2' fill='white'/><circle cx='28' cy='22' r='2' fill='white'/></g><defs><linearGradient id='grad1' x1='0' y1='0' x2='48' y2='48' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff6a00'/><stop offset='1' stop-color='%23ee0979'/></linearGradient><linearGradient id='grad2' x1='14' y1='14' x2='34' y2='34' gradientUnits='userSpaceOnUse'><stop stop-color='%2343cea2'/><stop offset='1' stop-color='%23185a9d'/></linearGradient></defs></svg>" alt="App Logo" class="logo-img">
+              </div>
+              <h1 class="display-5 fw-bold text-white mb-0">
+                <i class="bi bi-youtube text-danger"></i> YouTube Sentiment Analyzer
+              </h1>
+            </div>
+          </div>
+        </div>
+        <!-- Welcome Card and Options Card Row (Side by Side) -->
+        <div class="row mb-4 justify-content-center">
+          <div class="col-lg-10 col-md-10 col-12">
+            <div class="welcome-card card shadow-lg p-4 w-100 d-flex flex-column justify-content-center align-items-center">
+              <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-stars display-5 text-warning me-3"></i>
+                <div>
+                  <h2 class="fw-bold mb-1 gradient-text">Welcome to YouTube Sentiment Analyzer</h2>
+                  <p class="mb-0 text-light">Discover audience sentiment trends with style and ease!</p>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="card p-3 bg-dark bg-opacity-50 border-0 mb-2">
+                    <h6 class="mb-2"><i class="bi bi-lightbulb me-2 text-info"></i>How it works</h6>
+                    <ul class="mb-0 small text-light">
+                      <li>Paste a YouTube video link below</li>
+                      <li>Analyze comments from the last 12 months</li>
+                      <li>See trends, top comments, and word clouds</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card p-3 bg-dark bg-opacity-50 border-0 mb-2">
+                    <h6 class="mb-2"><i class="bi bi-link-45deg me-2 text-success"></i>Try these examples</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button class="btn btn-outline-primary btn-sm example-link">Music Video</button>
+                      <button class="btn btn-outline-primary btn-sm example-link">TED Talk</button>
+                      <button class="btn btn-outline-primary btn-sm example-link">Viral Hit</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Recent Videos and Feedback Row -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-8 col-12">
+            <div id="recentVideosCard" class="card shadow-lg p-4" style="display:none;">
+              <h4 class="section-title mb-3"><i class="bi bi-clock-history me-2"></i>Recent Videos</h4>
+              <ul class="list-group list-group-flush" id="recentVideosList"></ul>
+            </div>
+          </div>
+          <div class="col-lg-4 col-12 d-flex flex-column align-items-stretch">
+            <button class="btn btn-outline-primary mb-4 w-100" id="feedbackBtn" onclick="openFeedbackModal()"><i class="bi bi-chat-dots me-1"></i>Feedback</button>
+            <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content bg-dark text-light">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel"><i class="bi bi-chat-dots me-2"></i>Send Feedback</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <textarea class="form-control mb-3" id="feedbackText" rows="4" placeholder="Your feedback..."></textarea>
+                    <button class="btn btn-primary w-100" id="submitFeedback">Submit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Main Analysis Section (Header, Input, Results) -->
+        <header class="text-center mb-5">
+          <div class="gradient-custom py-4 rounded-3 mb-4">
+            <p class="lead text-white-50">
+              Analyze comments from the last 12 months to discover audience sentiment trends
+            </p>
+          </div>
+          
+          <!-- Input Section -->
+          <div class="card shadow-lg p-4 mb-5">
+            <div class="input-group">
+              <span class="input-group-text bg-dark text-light border-0">
+                <i class="bi bi-link-45deg"></i>
+              </span>
+              <input 
+                type="text" 
+                id="url" 
+                class="form-control border-0 bg-dark text-light" 
+                placeholder="Enter YouTube Video URL" 
+                aria-label="YouTube Video URL"
+              />
+              <button onclick="analyzeSentiment()" class="btn btn-primary px-4">
+                <i class="bi bi-search me-2"></i>Analyze
+              </button>
+            </div>
+            <div id="error" class="text-danger mt-3 text-start"></div>
+          </div>
+        </header>
+        <div id="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="static/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+  <!-- Add jsPDF and confetti CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Toast Container -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+    <div id="toastContainer"></div>
+  </div>
+  <!-- Progress Bar -->
+  <div id="progressBar" style="position:fixed;top:0;left:0;width:0;height:4px;background:var(--primary-gradient);z-index:9999;transition:width 0.4s;"></div>
+  <!-- Motivational Quote -->
+  <div class="container-fluid"><div class="row"><div class="col-12 text-center mb-3"><span id="motivationalQuote" class="badge bg-gradient p-3 fs-5"></span></div></div></div>
+  <script>
+    // Motivational Quotes
+    const quotes = [
+      "Great things never come from comfort zones.",
+      "Push yourself, because no one else is going to do it for you.",
+      "Success doesn't just find you. You have to go out and get it.",
+      "Dream it. Wish it. Do it.",
+      "Stay positive, work hard, make it happen.",
+      "Don't stop when you're tired. Stop when you're done.",
+      "Little things make big days."
+    ];
+    function showRandomQuote() {
+      document.getElementById('motivationalQuote').textContent = quotes[Math.floor(Math.random()*quotes.length)];
+    }
+    // Theme Customizer
+    function setAccentColor(color) {
+      document.documentElement.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${color}, #ee0979 100%)`);
+    }
+  </script>
+  <!-- Most Used Words Bar Chart -->
+  <div id="wordsBarChartContainer" style="display:none;max-width:600px;margin:2rem auto;">
+    <canvas id="wordsBarChart"></canvas>
+  </div>
+</body>
+</html>
